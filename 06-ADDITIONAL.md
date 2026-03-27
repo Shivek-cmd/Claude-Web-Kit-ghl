@@ -468,6 +468,118 @@ Paste CSS in this order per page:
 
 ---
 
+## 🚀 VERCEL / STATIC HOSTING DEPLOYMENT
+
+### vercel.json — ALWAYS include this at project root
+
+```json
+{
+  "rewrites": [
+    { "source": "/", "destination": "/pages/home/index.html" },
+    { "source": "/about", "destination": "/pages/about/index.html" },
+    { "source": "/services", "destination": "/pages/services/index.html" },
+    { "source": "/portfolio", "destination": "/pages/portfolio/index.html" },
+    { "source": "/blog", "destination": "/pages/blog/index.html" },
+    { "source": "/contact", "destination": "/pages/contact/index.html" },
+    { "source": "/privacy-policy", "destination": "/pages/privacy-policy/index.html" },
+    { "source": "/terms-of-service", "destination": "/pages/terms-of-service/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/global/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400" }
+      ]
+    }
+  ],
+  "cleanUrls": true,
+  "trailingSlash": false
+}
+```
+
+**Adapt the `rewrites` array** to match your actual pages. Add/remove entries as needed.
+
+### Vercel Deployment Steps
+
+1. **Before deploying — prepare root-level route files:**
+   ```bash
+   # Copy every page HTML to its root-level route directory
+   cp pages/home/index.html index.html
+   cp pages/404/index.html 404.html
+   
+   mkdir -p about services portfolio blog contact privacy-policy terms-of-service
+   cp pages/about/index.html about/index.html
+   cp pages/services/index.html services/index.html
+   cp pages/portfolio/index.html portfolio/index.html
+   cp pages/blog/index.html blog/index.html
+   cp pages/contact/index.html contact/index.html
+   cp pages/privacy-policy/index.html privacy-policy/index.html
+   cp pages/terms-of-service/index.html terms-of-service/index.html
+   ```
+
+2. **Ensure all HTML uses absolute paths** (starting with `/`):
+   ```html
+   <!-- ✅ CORRECT -->
+   <link rel="stylesheet" href="/global/variables.css">
+   <link rel="stylesheet" href="/pages/about/about.css">
+   <script src="/scripts/global-scripts.js" defer></script>
+   <img src="/assets/images/logo.png">
+   
+   <!-- ❌ WRONG — will break on Vercel -->
+   <link rel="stylesheet" href="../../global/variables.css">
+   ```
+
+3. **Push to GitHub and deploy on Vercel:**
+   - Go to https://vercel.com/new → Import your repo
+   - **Framework Preset:** `Other`
+   - **Build Command:** leave empty (no build needed)
+   - **Output Directory:** leave empty (or `.`)
+   - Click **Deploy**
+
+4. **Set default branch:** Make sure GitHub's default branch matches what Vercel deploys from. If your code is on a branch other than `main`, either:
+   - Change the default branch on GitHub (Settings → General → Default branch)
+   - Or change the production branch on Vercel (Settings → Git → Production Branch)
+
+### Why Both Root Files AND vercel.json?
+
+- **Root-level `index.html` files** = primary routing mechanism. Static hosts serve these directly.
+- **`vercel.json` rewrites** = backup routing + maps to `pages/` source files. Also adds security headers and caching.
+- **`404.html` at root** = Vercel serves this automatically for any URL that doesn't match a file.
+- Having both ensures the site works on Vercel, Netlify, GitHub Pages, and any static server.
+
+### CSS Variable Audit Before Deploy
+
+Before deploying, verify every CSS variable used in page CSS files is defined in `variables.css`:
+
+```bash
+# Find all var(--xyz) references in page CSS files
+grep -roh 'var(--[a-z-]*)' pages/ | sort -u > /tmp/used-vars.txt
+
+# Find all --xyz definitions in variables.css
+grep -oh '\-\-[a-z-]*:' global/variables.css | sed 's/:$//' | sort -u > /tmp/defined-vars.txt
+
+# Show any variables used but not defined
+comm -23 /tmp/used-vars.txt <(sed 's/^/var(/' /tmp/defined-vars.txt | sed 's/$/)/' | sort) 
+```
+
+If any variables are missing, add them to `variables.css` in BOTH the `:root` (light) and `[data-theme="dark"]` blocks.
+
+---
+
 ## 📋 PRE-LAUNCH CHECKLIST
 
 Run this before any site goes live:

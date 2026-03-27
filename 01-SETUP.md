@@ -6,7 +6,28 @@
 ## 📁 FOLDER STRUCTURE — ALWAYS USE THIS EXACTLY
 
 ```
-claude-web-kit-ghl/
+project-root/
+│
+├── index.html                 # Homepage (copy of pages/home/index.html — required for hosting)
+├── 404.html                   # Custom 404 (copy of pages/404/index.html — Vercel/Netlify use this)
+├── vercel.json                # Vercel config: rewrites, headers, caching (see 06-ADDITIONAL.md)
+├── sitemap.xml                # XML sitemap with all page URLs
+├── robots.txt                 # Robots directives + sitemap reference
+│
+├── about/
+│   └── index.html             # Root-level route file (copy of pages/about/index.html)
+├── services/
+│   └── index.html             # Root-level route file
+├── portfolio/
+│   └── index.html
+├── blog/
+│   └── index.html
+├── contact/
+│   └── index.html
+├── privacy-policy/
+│   └── index.html
+├── terms-of-service/
+│   └── index.html
 │
 ├── global/
 │   ├── variables.css          # :root design tokens — single source of truth
@@ -19,33 +40,33 @@ claude-web-kit-ghl/
 ├── scripts/
 │   └── global-scripts.js      # IntersectionObserver, counters, FAQ, slider, filter, TOC
 │
-├── pages/
+├── pages/                     # Source pages (CSS lives here, HTML is copied to root-level routes)
 │   ├── home/
 │   │   ├── index.html         # Homepage HTML (no inline CSS)
 │   │   └── home.css           # Homepage styles
 │   ├── about/
-│   │   ├── about.html
+│   │   ├── index.html
 │   │   └── about.css
 │   ├── services/
-│   │   ├── services.html
+│   │   ├── index.html
 │   │   └── services.css
 │   │   └── [service-slug]/
-│   │       ├── service-page.html
+│   │       ├── index.html
 │   │       └── service-page.css
 │   ├── portfolio/
-│   │   ├── portfolio.html
+│   │   ├── index.html
 │   │   └── portfolio.css
 │   ├── blog/
-│   │   ├── blog.html          # Blog listing page
+│   │   ├── index.html         # Blog listing page
 │   │   ├── blog.css
 │   │   └── [post-slug]/
-│   │       ├── post.html      # Individual blog post
+│   │       ├── index.html     # Individual blog post
 │   │       └── post.css
 │   ├── contact/
-│   │   ├── contact.html
+│   │   ├── index.html
 │   │   └── contact.css
 │   └── 404/
-│       ├── 404.html
+│       ├── index.html
 │       └── 404.css
 │
 └── assets/
@@ -65,6 +86,30 @@ claude-web-kit-ghl/
         ├── android-chrome-512x512.png
         └── site.webmanifest
 ```
+
+### ⚠️ WHY ROOT-LEVEL ROUTE FILES ARE REQUIRED
+
+Static hosting platforms (Vercel, Netlify, GitHub Pages) map URL paths directly to the filesystem:
+- `/about` looks for `/about/index.html` at the **root** — NOT `/pages/about/index.html`
+- Without root-level copies, every route returns **404**
+
+**Rule:** Every page HTML file must exist in **two places**:
+1. `pages/[page]/index.html` — the **source** (edit here, CSS lives alongside)
+2. `[page]/index.html` at root — the **deployed copy** (copy from source after editing)
+
+The homepage is special: copy `pages/home/index.html` → root `index.html`.
+
+> **Important:** All CSS/JS paths in HTML must use **absolute paths** (starting with `/`), not relative paths. This ensures the same HTML works in both locations:
+> ```html
+> <!-- ✅ CORRECT — works from any directory -->
+> <link rel="stylesheet" href="/global/variables.css">
+> <link rel="stylesheet" href="/pages/about/about.css">
+> <script src="/scripts/global-scripts.js" defer></script>
+>
+> <!-- ❌ WRONG — breaks when file is at root level -->
+> <link rel="stylesheet" href="../../global/variables.css">
+> <script src="../../scripts/global-scripts.js" defer></script>
+> ```
 
 ---
 
@@ -117,10 +162,10 @@ Copy this shell for every new page. Replace the `[placeholders]`.
   <meta name="twitter:description" content="[Twitter description]">
   <meta name="twitter:image"       content="https://yoursite.com/assets/og/og-[page].jpg">
 
-  <!-- CSS: always this order -->
-  <link rel="stylesheet" href="../../global/variables.css">
-  <link rel="stylesheet" href="../../global/base.css">
-  <link rel="stylesheet" href="./[page].css">
+  <!-- CSS: always this order — ALWAYS use absolute paths (start with /) -->
+  <link rel="stylesheet" href="/global/variables.css">
+  <link rel="stylesheet" href="/global/base.css">
+  <link rel="stylesheet" href="/pages/[page]/[page].css">
 
   <!-- JSON-LD (page-specific schema — see 05-SEO.md) -->
   <script type="application/ld+json">
@@ -159,8 +204,8 @@ Copy this shell for every new page. Replace the `[placeholders]`.
   ════════════════════════════════════════════════════════ -->
   <!-- [footer.html content here for local preview] -->
 
-  <!-- Global scripts -->
-  <script src="../../scripts/global-scripts.js" defer></script>
+  <!-- Global scripts — ALWAYS absolute path -->
+  <script src="/scripts/global-scripts.js" defer></script>
 
   <!-- Page-specific inline JS (if any) -->
   <script>
@@ -180,7 +225,15 @@ Since GHL injects header/footer globally, you need them inline for local preview
 1. Open `pages/home/index.html` in VS Code
 2. Where the header comment is, paste the full content of `global/header.html`
 3. Where the footer comment is, paste the full content of `global/footer.html`
-4. Open with **Live Server** extension in VS Code (or just double-click to open in browser)
+4. Serve with a local static server (required for absolute paths to resolve):
+   ```bash
+   # Any of these work:
+   npx serve .              # Node.js
+   python3 -m http.server   # Python
+   ```
+5. Open `http://localhost:3000` (or `http://localhost:8000` for Python)
+
+> **⚠️ Important:** Do NOT open HTML files directly with `file://` — absolute paths like `/global/variables.css` will not resolve. Always use a local HTTP server.
 
 > **Tip**: Keep a `_local-preview/` folder with versions that have header/footer already included for quick testing. Never commit these — they're just for local use.
 
