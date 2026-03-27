@@ -181,6 +181,15 @@ Or paste the CSS content directly into GHL's Custom CSS box per page.
 - **NEVER** ship without a custom 404 page
 - **NEVER** skip `<link rel="canonical">` on every page
 
+### Deployment & Paths Rules
+- **NEVER** use relative paths (`../../global/variables.css`) in HTML — always use absolute paths (`/global/variables.css`)
+- **NEVER** skip creating root-level `index.html` route files — static hosts (Vercel, Netlify) need them
+- **NEVER** forget a root `index.html` (homepage) and `404.html` (custom error page) in the project root
+- **NEVER** deploy without a `vercel.json` (or equivalent config) when using Vercel/Netlify
+- **NEVER** skip `sitemap.xml` and `robots.txt` in the project root
+- **NEVER** reference CSS variables in page CSS that aren't defined in `variables.css` — check both light and dark themes
+- **NEVER** open HTML files with `file://` for testing — absolute paths won't resolve. Always use a local HTTP server (`npx serve .`)
+
 ### Favicon
 - **NEVER** ship without `favicon.ico`
 - **NEVER** skip `site.webmanifest`
@@ -189,6 +198,17 @@ Or paste the CSS content directly into GHL's Custom CSS box per page.
 ---
 
 ## ✅ EVERY WEBSITE MUST HAVE — MASTER CHECKLIST
+
+### Deployment
+- [ ] Root `index.html` (homepage) exists at project root
+- [ ] Root `404.html` (custom error page) exists at project root
+- [ ] Root-level `[page]/index.html` exists for every route (copy from `pages/[page]/index.html`)
+- [ ] `vercel.json` with rewrites, security headers, and cache config (see 06-ADDITIONAL.md)
+- [ ] `sitemap.xml` with all page URLs at project root
+- [ ] `robots.txt` with sitemap reference at project root
+- [ ] All HTML paths are absolute (start with `/`), not relative
+- [ ] All CSS variables used in page CSS files are defined in `variables.css` (both light AND dark themes)
+- [ ] Local test: `npx serve .` → every route loads correctly at `http://localhost:3000`
 
 ### Structure
 - [ ] Sticky navbar — blur bg on scroll, mobile hamburger, CTA button
